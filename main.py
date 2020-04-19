@@ -3,6 +3,7 @@ import tweepy
 from tweepy import Stream 
 from tweepy.streaming import StreamListener
 import json 
+import time
 
 from decodeTweet import decodeTweet
 from getCovidInfo import getCovidInfo
@@ -59,14 +60,16 @@ class StdOutListener(StreamListener):
         tweeted_by, tweeted_at = clean_data["user"]["screen_name"], clean_data["in_reply_to_screen_name"]
         tweet, tweet_id = clean_data["text"], clean_data["id"]
 
+        tweet_url = "https://twitter.com/{0}/status/{1}".format(str(tweeted_by), str(tweet_id))
+
         logging.info("====================================================")
         logging.info("Tweet by= " + str(tweeted_by))
         logging.info("Tweet at= " + str(tweeted_at))
         logging.info("Tweet= " + str(tweet))
+        logging.info("Tweet URL= " + str(tweet_url))
         logging.info(clean_data)
         logging.info("====================================================")
 
-        tweet_url = "https://twitter.com/{0}/status/{1}".format(str(tweeted_by), str(tweet_id))
 
         if user_mentions[0]["screen_name"] == account_name or user_mentions[0]["screen_name"] == account_name.lower():
             print("Responding to tweet..." + tweet_url)
@@ -115,4 +118,16 @@ def followStream():
 
 if __name__ == "__main__":
     tweet = "Hello world..!"
-    followStream()
+
+    try: 
+        followStream()
+    except Exception:
+        time.sleep(10)
+        logging.exception("Fatal exception. Consult logs.")
+        followStream()
+    finally: 
+        time.sleep(10)
+        logging.exception("IN FINALLY")
+        print("IN FINALLY")
+        followStream()
+
