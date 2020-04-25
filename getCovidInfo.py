@@ -1,5 +1,4 @@
-from globals import error_message
-from utils import countryCodeToName, nameToCountryCode, callApi
+from utils import countryCodeToName, nameToCountryCode, callApi, ERROR_MESSAGE
 
 import datetime
 from logger import *
@@ -9,7 +8,13 @@ def infoToTweet(information, country, city, travel):
 
     updated = 20 # The TrackCorona.live creators scrape every 20 minutes, so this is the maximum update time!
 
-    hashtags = "#COVID19"
+    hashtags = ["#COVID19"]
+
+    location = information["location"].replace(" ", "").replace("County", "")
+    if ","  in location: 
+        location = location.split(",")[0]
+
+    hashtags.append("#" + location)
 
     if not travel and information["updated"]:
         now = int(datetime.datetime.now().minute)
@@ -18,16 +23,20 @@ def infoToTweet(information, country, city, travel):
 
 
     if travel: 
+
         travel_information = ""
         if len(information["data"]) > 200: 
             travel_information = information["data"][0:155] + "... for remainder, check the countries govt site for regulations"
 
         ret = "In the {0}, {1} -- Updated {2} minutes ago.".format(information["location"], travel_information, updated)
     elif city: 
-        ret = "In {0}, there are {1} confirmed cases, {2} people recovered and {3} deaths -- Updated {4} minutes ago. {5}".format(information["location"], information["confirmed"], information["recovered"], information["dead"], updated, hashtags)
+        ret = "In {0}, there are {1} confirmed cases, {2} people recovered and {3} deaths -- Updated {4} minutes ago. {5}".format(information["location"], information["confirmed"], information["recovered"], information["dead"], updated, " ".join(hashtags))
     else: 
-        ret = "In the {0} ({1}), there are {2} confirmed cases, {3} people recovered and {4} deaths -- Updated {5} minutes ago. {6}".format(information["country_code"].upper(), information["location"], information["confirmed"], information["recovered"], information["dead"], updated, hashtags)
-        if information["doesnt_have_city"]: 
+
+        hashtags.append("#" + information["country_code"].upper())
+
+        ret = "In the {0} ({1}), there are {2} confirmed cases, {3} people recovered and {4} deaths -- Updated {5} minutes ago. {6}".format(information["country_code"].upper(), information["location"], information["confirmed"], information["recovered"], information["dead"], updated, " ".join(hashtags))
+        if "doesnt_have_city" in information: 
             ret = "I don't have information on " + information["doesnt_have_city"] + ", however, in your country, the {0} ({1}), there are {2} confirmed cases, {3} people recovered and {4} deaths -- Updated {5} minutes ago. {6}".format(information["country_code"].upper(), information["location"], information["confirmed"], information["recovered"], information["dead"], updated, hashtags)
 
     print(ret)
@@ -60,10 +69,8 @@ def getCovidInfo(country, city, travel):
     logging.info("In Get Corona Info Tweet with input country=" + str(country) + " city=" + str(city) + " travel=" + str(travel))
     logging.info('=============================================================================')
 
-    # print(country, city, travel)
-
     if not country and not city and not travel: 
-        return error_message 
+        return ERROR_MESSAGE 
 
     # Step 1: Request Information to TrackCorona.live API 
     url = {
@@ -75,7 +82,6 @@ def getCovidInfo(country, city, travel):
     info = None 
 
     if travel: 
-
         try: 
             resp = callApi(url["travel_api"])
 
@@ -88,20 +94,18 @@ def getCovidInfo(country, city, travel):
 
         except: 
             logging.error("Error in travel line 83 in getCoronaInfo.py")
-            return error_message
+            return ERROR_MESSAGE
 
     elif city:
-
         try:
             resp = callApi(url["cities_api"])
             info = getInfoFromResp(resp["data"], city)
         except:
             logging.error("Error in city line 98 in getCoronaInfo.py")
-            return error_message
+            return ERROR_MESSAGE
 
     elif country: 
-
-        try: 
+        try:
             if len(country) > 2: 
                 country = country if not nameToCountryCode(country) else nameToCountryCode(country) 
             
@@ -110,11 +114,9 @@ def getCovidInfo(country, city, travel):
 
         except:
             logging.error("Error in city line 98 in getCoronaInfo.py")
-            return error_message
-
+            return ERROR_MESSAGE
 
     if not travel and city and not info and country: 
-
         try: 
             if len(country) > 2: 
                 country = country if not nameToCountryCode(country) else nameToCountryCode(country) 
@@ -126,13 +128,11 @@ def getCovidInfo(country, city, travel):
 
         except:
             logging.error("Error in city line 98 in getCoronaInfo.py")
-            return error_message
-
+            return ERROR_MESSAGE
 
     if not info: 
         logging.error("IN ERROR for getCoronaInfo.py")
-        return error_message
-
+        return ERROR_MESSAGE
 
     # Step 2: Clean information and turn it into tweet 
     tweet = infoToTweet(info, country, city, travel) 
