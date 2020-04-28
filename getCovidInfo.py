@@ -4,7 +4,7 @@ import datetime
 from logger import *
  
 
-def infoToTweet(information, country, city, travel): 
+def infoToTweet(information, country, city, state, travel): 
 
     updated = 20 # The TrackCorona.live creators scrape every 20 minutes, so this is the maximum update time!
 
@@ -43,20 +43,22 @@ def infoToTweet(information, country, city, travel):
     return ret
 
 
-def getInfoFromResp(data, loc): 
+def getInfoFromResp(data, loc, state): 
     info = None
 
     for item in data: 
 
         city = None if "," not in item["location"] else item["location"].split(",")[0]
-
         if loc in item["location"]: 
+            # print(item["location"])
             info = item
-        
-        if city and loc in city: 
-            return item
 
-        if loc in item["location"] and loc == city: 
+        if loc in item["location"] and state in item["location"]: 
+            # print(item["location"])
+            return item 
+        
+
+        if loc in item["location"] and loc == city and state in item["location"]: 
             return item 
     
     return info
@@ -64,12 +66,17 @@ def getInfoFromResp(data, loc):
 
 
 
-def getCovidInfo(country, city, travel):
+def getCovidInfo(decode_info):
+
+    country, city, state, travel = decode_info
+    # print(country, city, state, travel)
+
     logging.info('=============================================================================')
-    logging.info("In Get Corona Info Tweet with input country=" + str(country) + " city=" + str(city) + " travel=" + str(travel))
+    logging.info("In Get Corona Info Tweet with input country=" + str(country) + " city=" + str(city) + " travel=" + str(travel) + " state=" + str(state)) 
     logging.info('=============================================================================')
 
-    if not country and not city and not travel: 
+
+    if not country and not city and not state and not travel: 
         return ERROR_MESSAGE 
 
     # Step 1: Request Information to TrackCorona.live API 
@@ -90,16 +97,16 @@ def getCovidInfo(country, city, travel):
             else: 
                 country_name = countryCodeToName(country)
 
-            info = getInfoFromResp(resp["data"], country_name)
+            info = getInfoFromResp(resp["data"], country_name, state)
 
         except: 
-            logging.error("Error in travel line 83 in getCoronaInfo.py")
+            logging.error("Error in travel line in getCoronaInfo.py")
             return ERROR_MESSAGE
 
     elif city:
         try:
             resp = callApi(url["cities_api"])
-            info = getInfoFromResp(resp["data"], city)
+            info = getInfoFromResp(resp["data"], city, state)
         except:
             logging.error("Error in city line 98 in getCoronaInfo.py")
             return ERROR_MESSAGE
@@ -113,7 +120,7 @@ def getCovidInfo(country, city, travel):
             info = resp["data"][0]
 
         except:
-            logging.error("Error in city line 98 in getCoronaInfo.py")
+            logging.error("Error in country getCoronaInfo.py")
             return ERROR_MESSAGE
 
     if not travel and city and not info and country: 
@@ -127,7 +134,7 @@ def getCovidInfo(country, city, travel):
             city = None 
 
         except:
-            logging.error("Error in city line 98 in getCoronaInfo.py")
+            logging.error("Error in line 135in getCoronaInfo.py")
             return ERROR_MESSAGE
 
     if not info: 
@@ -135,7 +142,7 @@ def getCovidInfo(country, city, travel):
         return ERROR_MESSAGE
 
     # Step 2: Clean information and turn it into tweet 
-    tweet = infoToTweet(info, country, city, travel) 
+    tweet = infoToTweet(info, country, city, state, travel) 
 
     # Step 3: return 
     return tweet  
@@ -148,7 +155,8 @@ def getCovidInfo(country, city, travel):
 
 if __name__ == "__main__":  
     country = "United States"
-    city = "Fairfax County"
-    travel = True 
-    getCovidInfo(country, city, travel)
+    city = "Miami County"
+    state = "Florida"
+    travel = False 
+    getCovidInfo((country, city, state, travel))
     # getCounties()

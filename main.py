@@ -15,23 +15,27 @@ from utils import nameToCountryCode, countryCodeToName
 def respondToTweet(tweet_text, tweeted_by, tweeted_at, tweet_id): 
 
     #Step 1: Decode the Tweet to find the Critical Words
-    country, city, travel = decodeTweet(tweet_text)
+    decode_info = decodeTweet(tweet_text)
+
+    country, city, state, travel = decode_info
 
     if len(country) > 2: 
         country = country if not nameToCountryCode(country) else nameToCountryCode(country) 
 
     #Step 2: Call trackcorona.live api to get information and put it in tweet form 
-    tweet = getCovidInfo(country, city, travel)
+    tweet = getCovidInfo(decode_info)
 
     #Step 3: Tweet Back Information 
     if not country and not city and not travel:
         if "symptom" in tweet_text.lower(): 
             tweet = "The symptoms of Coronavirus include fever, cough, and shortness of breath. If you think you have #COVID19 or begin to develop symptoms get tested and go to cdc.gov/COVID-19."
-        elif "test" in tweet_text.lower(): 
+        elif "test" in tweet_text.lower() or "tested" in tweet_text.lower(): 
             tweet = "Learn more about getting tested for #COVID19 at https://www.cdc.gov/coronavirus/2019-ncov/symptoms-testing/testing.html."
         elif "safe" in tweet_text.lower() or "protect" in tweet_text.lower(): 
             tweet = "Protect yourself by following #CDC #socialdistancing guidelines and oblige with stay at home orders."
-    
+        if "what is covid" in tweet_text.lower() or "what is coronavirus" in tweet_text.lower():
+            tweet = 'COVID is a large family of viruses transmitting between animals and people that cause illness ranging from the common cold to severe acute respiratory syndrome (SARS). Learn more @CDCgov #COVID #CDC'
+
     #Step 4: Post the Response 
     postResponse(tweet, tweet_id)
 
@@ -107,7 +111,7 @@ def dailyUpdates(countries):
     """
     for country in countries: 
         #Step 1: Call trackcorona.live api to get information and put it in tweet form 
-        response = getCovidInfo(country, "", False)
+        response = getCovidInfo((country, "", "", False))
         #Step 2: Tweet Back Information 
         publishTweet("Daily Update --" + response)
 

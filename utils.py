@@ -4,11 +4,28 @@ import json
 
 ERROR_MESSAGE = "Sorry I don't understand your tweet. Please try putting in a specific city or county you would like #COVID19 updates for!" 
 
+
+class AppURLopener(urllib.request.FancyURLopener):
+    version = "Mozilla/5.0"
+
+
+
 def callApi(url): 
-    req = Request(url, headers={"User-Agent":"Mozilla/5.0"})
-    webpage = urlopen(req).read() 
-    json_response = json.loads(webpage)
-    return json_response 
+
+    opener = AppURLopener()
+    response = opener.open(url)
+    return json.loads(response.read())
+
+    # req = Request(url, headers={"User-Agent","Mozilla/5.0"})
+    # webpage = urlopen(req).read() 
+    # json_response = json.loads(webpage)
+    # return json_response 
+
+
+# if __name__ == "__main__": 
+#     url = "https://www.trackcorona.live/api/countries/US"
+#     print(callApi(url))
+
 
 def getCounties():
 
@@ -42,7 +59,65 @@ def nameToCountryCode(country_name):
 
 
 state_names = {"Alaska", "Alabama", "Arkansas", "American Samoa", "Arizona", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Guam", "Hawaii", "Iowa", "Idaho", "Illinois", "Indiana", "Kansas", "Kentucky", "Louisiana", "Massachusetts", "Maryland", "Maine", "Michigan", "Minnesota", "Missouri", "Mississippi", "Montana", "North Carolina", "North Dakota", "Nebraska", "New Hampshire", "New Jersey", "New Mexico", "Nevada", "New York", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Virginia", "Virgin Islands", "Vermont", "Washington", "Wisconsin", "West Virginia", "Wyoming"}
+state_abbreviations = {"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DC", "DE", "FL", "GA", 
+          "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+          "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+          "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+          "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"}
 
+
+states = [
+    ("AL", "Alabama"), 
+    ("AK", "Alaska"), 
+    ("AZ", "Arizona"), 
+    ("AR", "Arkansas"), 
+    ("CA", "California"), 
+    ("CO", "Colorado"), 
+    ("CT", "Connecticut"),
+    ("DE", "Delaware"), 
+    ("FL", "Florida"), 
+    ("GA", "Georgia"),
+    ("HI", "Hawaii"), 
+    ("ID", "Idaho"), 
+    ("IL", "Illinois"), 
+    ("IN", "Indiana"),
+    ("IA", "Iowa"), 
+    ("KS", "Kansas"), 
+    ("KY", "Kentucky"), 
+    ("LA", "Louisiana"), 
+    ("ME", "Maine"), 
+    ("MD", "Maryland"), 
+    ("MA", "Massachusetts"), 
+    ("MI", "Michigan"), 
+    ("MN", "Minnesota"), 
+    ("MS", "Mississippi"), 
+    ("MO", "Missouri"), 
+    ("MT", "Montana"), 
+    ("NE", "Nebraska"), 
+    ("NV", "Nevada"), 
+    ("NH", "New Hampshire"), 
+    ("NJ", "New Jersey"), 
+    ("NM", "New Mexico"), 
+    ("NY", "New York"), 
+    ("NC", "North Carolina"), 
+    ("ND", "North Dakota"), 
+    ("OH", "Ohio"), 
+    ("OK", "Oklahoma"), 
+    ("OR", "Oregon"), 
+    ("PA", "Pennsylvania"), 
+    ("RI", "Rhode Island"), 
+    ("SC", "South Carolina"), 
+    ("SD", "South Dakota"), 
+    ("TN", "Tennessee"), 
+    ("TX", "Texas"), 
+    ("UT", "Utah"), 
+    ("VT", "Vermont"), 
+    ("VA", "Virginia"), 
+    ("WA", "Washington"), 
+    ("WV", "Washington"),
+    ("WI", "Wisconsin"), 
+    ("WY","Wyoming")
+]
 
 countries = [
     ('US', 'United States'),

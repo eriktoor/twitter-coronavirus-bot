@@ -1,6 +1,5 @@
-from geotext import GeoText
 from logger import *
-from utils import countries, counties, state_names
+from utils import countries, states, counties, state_names, state_abbreviations
 
 def allAdjacentWords(sentence): 
     res = []
@@ -54,7 +53,7 @@ def getCountry(tweet, allCombos):
 
     for i, j in countries: 
         for combo in allCombos: 
-            if combo in j.title(): 
+            if combo in j.title() and len(combo) > 3: 
                 country = combo
 
             if j.title() in allCombos: 
@@ -90,37 +89,75 @@ def getCity(tweet, allCombos):
 
     return city 
 
+def getState(tweet, allCombos): 
+
+    for combo in allCombos: 
+        word = combo.split(" ")
+        for i in range(len(word)): 
+            w = word[i]
+            if w.upper() in state_abbreviations and i > 0 and len(word[i-1]) > 2: 
+                return w.upper()
+            elif w.title() in state_names and i > 0 and len(word[i-1]) > 2: 
+                return w.title()
+
+
 
 def decodeTweet(tweet):
     logging.info('=============================================================================')
     logging.info("In Decode Tweet with input tweet= " + str(tweet))
 
-    # Get an Object with the Country, City, and other information 
-    places = GeoText(tweet.title())
 
-    country, city, travel = 0, "", False 
+    tweet = tweet.title()
 
-    for key, item in places.country_mentions.items(): 
-        country = key 
-        city =  "" if len(places.cities) == 0 else places.cities[0] 
+    country, city, state, travel = 0, "", "", False 
 
+    words = tweet.split(" ")
+    # print(words)
+
+    for abbrev, country_name in countries: 
+
+        if country_name in words: 
+            print(country_name)
+            tweet = tweet.replace(country, "")
+            country = country_name
+
+    for abbrev, state_name in states: 
+
+        if state_name in words: 
+            # words.remove(state)
+            state = state_name
+            tweet = tweet.replace(state, "")
+            print(tweet)
 
     allCombos = allAdjacentWords(tweet.title())
 
-    other_country = getCountry(tweet, allCombos)
-    country = other_country if not country else country
+    country = getCountry(tweet, allCombos)
+    city = getCity(tweet, allCombos)
+    
+    if city and not state: 
+        city_p0 = city.split(" ")[0]
+        tweet_parts = tweet.split(city_p0)
+        if len(tweet_parts) > 1: 
+            current_part = tweet_parts[1]
+            words = current_part.split(" ")
+            for abbrev, state_name in states: 
+                if abbrev.title() in words: 
+                    print(abbrev.title())
+                    state = state_name
 
-    other_city = getCity(tweet, allCombos)
-    city =  other_city if len(other_city) > len(city) else city
+
+    if "Miami" in city and state == "Florida": 
+        city = "Miami-Dade County"
+
 
     travel = True if "travel" in tweet or "flight" in tweet else False  
 
     logging.info("Output city=" + str(city) + " travel=" + str(travel) + " country=" + str(country))
     logging.info('=============================================================================')
 
-    return country, city, travel 
+    return country, city, state, travel 
 
 
 if __name__ == "__main__":
-    tweet = "what is going on in charlottesville va"
+    tweet = "where can i get tested"
     print(decodeTweet(tweet))
